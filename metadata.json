@@ -1,0 +1,9 @@
+{
+  "name": "Interview Panel AI",
+  "description": "A realistic multi-agent interview simulator that adapts to your target job and profile, providing structured coaching and feedback.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": []
+}
