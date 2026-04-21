@@ -235,7 +235,11 @@ export function InterviewCanvas({ session, onComplete }: { session: InterviewSes
 
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
-    if (isListening) recognitionRef.current?.stop();
+    // Stop listening before sending if active
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    }
 
     setIsTyping(true);
     

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { InterviewConfig } from "../types/interview";
 import { Button, Input, Textarea, Card } from "./ui";
-import { Briefcase, FileText, Link, Target, Zap } from "lucide-react";
+import { Briefcase, FileText, Target, Zap, Upload, FileCheck } from "lucide-react";
 
 export function ConfigurationForm({ onSubmit }: { onSubmit: (config: InterviewConfig) => void }) {
   const [config, setConfig] = useState<InterviewConfig>({
@@ -10,9 +10,30 @@ export function ConfigurationForm({ onSubmit }: { onSubmit: (config: InterviewCo
     candidateSummary: "",
     portfolioLinks: [],
     targetRound: "Technical Interview",
-    experienceLevel: "Senior",
+    experienceLevel: "Mid-Level",
     mode: "LIVE"
   });
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      const base64Str = result.split(',')[1]; // Strip data:mime/type;base64,
+      
+      setConfig(c => ({
+        ...c,
+        resumeFile: {
+          name: file.name,
+          mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'text/plain'),
+          data: base64Str
+        }
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -47,24 +68,46 @@ export function ConfigurationForm({ onSubmit }: { onSubmit: (config: InterviewCo
             value={config.resume}
             onChange={(e) => setConfig({ ...config, resume: e.target.value })}
           />
+          <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
+             <p className="text-[11px] text-slate-500 font-medium">Or attach a document (PDF/TXT):</p>
+             <label className={`cursor-pointer border px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 ${config.resumeFile ? 'border-indigo-600 text-indigo-700 bg-indigo-50' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+                {config.resumeFile ? <FileCheck size={16} /> : <Upload size={16} />} 
+                {config.resumeFile ? config.resumeFile.name : "Upload Resume"}
+                <input type="file" accept=".pdf,.txt,.doc,.docx" className="hidden" onChange={handleFileUpload} />
+             </label>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Interview Stage</label>
-            <Input 
+            <select 
               value={config.targetRound}
               onChange={(e) => setConfig({ ...config, targetRound: e.target.value })}
-              className="bg-slate-50/50"
-            />
+              className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="Initial Recruiter Screen">Initial Recruiter Screen</option>
+              <option value="Technical Interview">Technical Interview</option>
+              <option value="Hiring Manager Round">Hiring Manager Round</option>
+              <option value="System Design/Architecture">System Design/Architecture</option>
+              <option value="Behavioral / Cultural Fit">Behavioral / Cultural Fit</option>
+              <option value="Executive Round">Executive Round</option>
+            </select>
           </div>
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Seniority Level</label>
-            <Input 
+            <select 
               value={config.experienceLevel}
               onChange={(e) => setConfig({ ...config, experienceLevel: e.target.value })}
-              className="bg-slate-50/50"
-            />
+              className="flex h-10 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/20 focus:border-indigo-500"
+            >
+              <option value="Internship / Co-op">Internship / Co-op</option>
+              <option value="Entry-Level / Junior">Entry-Level / Junior</option>
+              <option value="Mid-Level">Mid-Level</option>
+              <option value="Senior">Senior</option>
+              <option value="Staff / Principal">Staff / Principal</option>
+              <option value="Director / Executive">Director / Executive</option>
+            </select>
           </div>
         </div>
 

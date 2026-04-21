@@ -11,6 +11,11 @@ export interface IntervewParticipant {
 export interface InterviewConfig {
   jobDescription: string;
   resume?: string;
+  resumeFile?: {
+    name: string;
+    mimeType: string;
+    data: string; // base64
+  };
   candidateSummary?: string;
   portfolioLinks?: string[];
   targetRound?: string;

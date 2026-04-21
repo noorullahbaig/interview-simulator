@@ -6,9 +6,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export class AIService {
   static async analyzeInterviewContext(config: InterviewConfig) {
-    const prompt = `
+    const promptText = `
       Job Description: ${config.jobDescription}
-      Resume: ${config.resume || "Not provided"}
+      Resume: ${config.resume || (config.resumeFile ? "Provided as attached document" : "Not provided")}
       Summary: ${config.candidateSummary || "Not provided"}
       Target Round: ${config.targetRound || "General"}
       Experience Level: ${config.experienceLevel || "Not specified"}
@@ -20,9 +20,20 @@ export class AIService {
       - panel: Array<{ name: string, role: string, persona: string, focus: string }>
     `;
 
+    const parts: any[] = [{ text: promptText }];
+    
+    if (config.resumeFile) {
+      parts.push({
+        inlineData: {
+          mimeType: config.resumeFile.mimeType,
+          data: config.resumeFile.data
+        }
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: { parts },
       config: {
         systemInstruction: SYSTEM_INSTRUCTIONS.ROLE_ANALYZER,
         responseMimeType: "application/json",
@@ -61,7 +72,7 @@ export class AIService {
   ) {
     const transcript = messages.map(m => `${m.senderName} (${m.senderRole}): ${m.text}`).join("\n");
     
-    const prompt = `
+    const promptText = `
       Current Transcript:
       ${transcript}
       
@@ -71,9 +82,21 @@ export class AIService {
       Keep responses concise and professional.
     `;
 
+    const parts: any[] = [{ text: promptText }];
+    
+    // We optionally include the resume in every prompt so the interviewer can continue querying it
+    if (config.resumeFile) {
+      parts.push({
+        inlineData: {
+          mimeType: config.resumeFile.mimeType,
+          data: config.resumeFile.data
+        }
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: prompt,
+      contents: { parts },
       config: {
         systemInstruction: SYSTEM_INSTRUCTIONS.INTERVIEWER(interviewer.name, interviewer.role, interviewer.persona, interviewerFocus),
       }
@@ -85,7 +108,7 @@ export class AIService {
   static async generateSpeech(text: string, voiceName: 'Puck' | 'Charon' | 'Kore' | 'Fenrir' | 'Zephyr' = 'Kore') {
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.1-flash-tts-preview",
         contents: [{ parts: [{ text }] }],
         config: {
           responseModalities: [Modality.AUDIO],
@@ -131,9 +154,20 @@ export class AIService {
   static async generateFinalReport(messages: Message[], config: InterviewConfig): Promise<InterviewResult> {
     const transcript = messages.map(m => `${m.senderName}: ${m.text}`).join("\n");
     
+    const parts: any[] = [{ text: `Evaluate this interview transcript:\n\n${transcript}` }];
+    
+    if (config.resumeFile) {
+      parts.push({
+        inlineData: {
+          mimeType: config.resumeFile.mimeType,
+          data: config.resumeFile.data
+        }
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Evaluate this interview transcript:\n\n${transcript}`,
+      contents: { parts },
       config: {
         systemInstruction: SYSTEM_INSTRUCTIONS.EVALUATION_COACH,
         responseMimeType: "application/json",
