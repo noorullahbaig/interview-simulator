@@ -27,6 +27,7 @@ export default function App() {
       const data = await AIService.analyzeInterviewContext(config);
       setSession(prev => prev ? {
         ...prev,
+        config: data.updatedConfig || config, // Overwrite with server-modified config (dropping base64 file block)
         panel: data.panel.map((p: any) => ({ ...p, id: Math.random().toString(36).substr(2, 5), avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}` })),
         status: 'READY'
       } : null);

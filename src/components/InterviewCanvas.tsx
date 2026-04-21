@@ -110,12 +110,21 @@ export function InterviewCanvas({ session, onComplete }: { session: InterviewSes
   }, []);
 
   const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Voice recognition is not supported in this browser. Please use Chrome, Edge, or Safari, or type your answers manually.");
+      return;
+    }
+
     if (isListening) {
       recognitionRef.current?.stop();
     } else {
       setInputValue("");
-      recognitionRef.current?.start();
-      setIsListening(true);
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (err) {
+        console.error("Speech recognition failed to start:", err);
+      }
     }
   };
 
